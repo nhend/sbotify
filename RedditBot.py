@@ -9,6 +9,7 @@ password = config.reddit_password
 user_agent = config.user_agent
 hot_word = config.hot_word
 
+
 #FORMAT: !Sbotify song:94 Dreaming artist:ATO
 #IMPLEMENT:
 #    Allowing for multiple songs in one comment
@@ -20,7 +21,7 @@ hot_word = config.hot_word
 #FIX:
 #    Convert print statements to errors or error response (incorrect format etc.)
 #    Title generation (set playlist description as full thread title)
-
+#    Multiple subreddits
 
 reddit = praw.Reddit(client_id=client_id,
                      client_secret=client_secret,
@@ -28,10 +29,13 @@ reddit = praw.Reddit(client_id=client_id,
                      user_agent=user_agent,
                      username=username)
 
+subreddit = reddit.subreddit('Sbotify')
+
+
 def parse_comment(comment):
     
     comment_body = comment.body
-    comment_body = comment_body[comment_body.find('!Sbotify'):] #shorten comment_body to content after the hotword call
+    comment_body = comment_body[comment_body.find(hot_word):] #shorten comment_body to content after the hotword call
     
     track_index = comment_body.find('song:')
     artist_index = comment_body.find('artist:')
@@ -102,11 +106,21 @@ def add_song(comment):
                     
                     break
     
-def search():
-
-    subreddit = reddit.subreddit('Sbotify')
+    return [track_id, playlist_id]
+ 
+def post_comment(comment, track_ids):
+    track_names = sbot.get_track_names(track_ids[0])
     
-    #while True
+    reply = "I've added your song, ***'" + track_names[0] + "'*** by **" + track_names[1] + "** "\
+        + " to this thread's playlist: ['" + sbot.get_playlist_name(comment.link_id) + "'](" + sbot.get_playlist_link(comment.link_id) + ")" \
+        + "\n\n [Sample of this song](" + sbot.get_track_preview(track_ids[0]) + ")" \
+        + "\n\n*** \n\n ^^I'm ^^a ^^bot ^^in ^^development ^^by ^^/u/CarpetStore. [^^Message ^^him](https://www.reddit.com/message/compose/?to=CarpetStore) ^^with ^^comments ^^or ^^complaints."
+    
+    print('Posted reply to ' + comment.id)
+    
+    comment.reply(reply)
+    
+def main():
     
     for comment in subreddit.comments():
         if hot_word in comment.body: 
@@ -120,10 +134,10 @@ def search():
                     else: #else, add song to thread's playlist
                         
                         comment_ids.write('\n' + comment.id)
-                        add_song(comment)
+                        track_ids = add_song(comment)
+                        post_comment(comment, track_ids)
                         break
-                         
-            #parse_comment(comment.body)
-            #find_comment(parse_comment(comment.body)) maybe???
             
-search()
+if __name__ == '__main__':
+    while True:
+        main()

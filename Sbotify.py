@@ -15,16 +15,6 @@ redirect_uri = config.redirect_uri
 token = util.prompt_for_user_token(username,scope=scopes,client_id=client_id,client_secret=client_secret, redirect_uri=redirect_uri)
 sp = spotipy.Spotify(auth=token)
 sp.trace = False
-
-def check_repeat_title(playlist_title):
-    
-    playlists = sp.user_playlists(username)
-
-    for item in playlists['items']:
-        if(item['name'] == playlist_title):
-            return True
-        
-    return False
         
 def create_playlist(playlist_title, playlist_desc):
     
@@ -55,7 +45,35 @@ def add_track(track_id, playlist_id):
     track_ids = [track_id] #for some reason, Spotipy only takes an array for track ids
     sp.user_playlist_add_tracks(username, playlist_id=playlist_id, tracks=track_ids)
 
-#title = 'Test 3'   
-# if not repeat_title(title):
-#     print('hello')
-#     create_playlist(title)
+#BELOW FUNCTIONS ARE FOR POSTING BOT REPLY
+    
+def get_track_names(track_id):
+    
+    track_name = sp.track(track_id)['name']
+    artist_name = sp.track(track_id)['artists'][0]['name']
+    
+    return [track_name, artist_name]
+
+def get_track_preview(track_id):
+    
+    return sp.track(track_id)['preview_url']
+
+def get_playlist_name(link_id):
+    
+    playlists = sp.user_playlists(username)
+    
+    for playlist in playlists['items']:
+        if (playlist['owner']['id'] == username) and (link_id.lower() in playlist['name'].lower()):
+            return playlist['name']
+       
+    return None
+
+def get_playlist_link(link_id):
+    
+    playlists = sp.user_playlists(username)
+    
+    for playlist in playlists['items']:
+        if (playlist['owner']['id'] == username) and (link_id.lower() in playlist['name'].lower()):
+            return playlist['external_urls']['spotify']
+       
+    return None
