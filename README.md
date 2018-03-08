@@ -7,7 +7,7 @@ You can summon Sbotify by using the following format at the end of your comment:
 
 After adding the song, Sbotify will reply to the summoning comment with a message telling the user their song was added to the playlist. It will also provide a link to the playlist, a link to a 30sec preview (which can be played without logging into Spotify), and a link to message me in case of an issue.
 
-![Comment example](https://imgur.com/ZZW5SgP)
+![Comment example](url:https://imgur.com/ZZW5SgP)
 
 ## Requirements
 
