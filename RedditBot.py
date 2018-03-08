@@ -8,7 +8,7 @@ username = config.reddit_username
 password = config.reddit_password
 user_agent = config.user_agent
 hot_word = config.hot_word
-
+subreddit_list = config.subreddits
 
 #FORMAT: !Sbotify song:94 Dreaming artist:ATO
 #IMPLEMENT:
@@ -19,9 +19,8 @@ hot_word = config.hot_word
 #    Allowing for just a song name ???
 
 #FIX:
-#    Convert print statements to errors or error response (incorrect format etc.)
-#    Title generation (set playlist description as full thread title)
-#    Multiple subreddits
+#    Convert errors to error response (incorrect format etc.)
+#    Playlist descriptions - Spotify API doesn't allow for descriptions ? 
 
 reddit = praw.Reddit(client_id=client_id,
                      client_secret=client_secret,
@@ -29,24 +28,29 @@ reddit = praw.Reddit(client_id=client_id,
                      user_agent=user_agent,
                      username=username)
 
-subreddit = reddit.subreddit('Sbotify')
+subreddits = reddit.subreddit('+'.join(subreddit_list))
 
 
 def parse_comment(comment):
     
     comment_body = comment.body
     comment_body = comment_body[comment_body.find(hot_word):] #shorten comment_body to content after the hotword call
-    
-    track_index = comment_body.find('song:')
-    artist_index = comment_body.find('artist:')
+    comment_body = comment_body.lower()
+
+    track_index = comment_body.find('song: ')
+    artist_index = comment_body.find('artist: ')
     
     #if begins with space, add 1
     
-    track_offset = 5 #need characters after 'song:', so exclude 'song:'
-    artist_offset = 7 #could've used len()+1 but that'd only be necessary if I changed the format
+    track_offset = 6 #need characters after 'song:', so exclude 'song:'
+    artist_offset = 8 #could've used len()+1 but that'd only be necessary if I changed the format
     
     if track_index == -1 or artist_index == -1:
-        print('Incorrect format')
+        comment.reply("Hi! Looks like you've used the wrong format, in case you've forgotten it's" + \
+                      "\n\n!Sbotify song: {song title} artist: {artist name}" + \
+                      "\n\n*** \n\n ^^I'm ^^a ^^bot ^^in ^^development ^^by ^^/u/CarpetStore. [^^Message ^^him](https://www.reddit.com/message/compose/?to=CarpetStore) ^^with ^^comments ^^or ^^complaints.")
+        
+        print('Posted error reply to ' + comment.id)
         
     track_index += track_offset
     artist_index += artist_offset
@@ -111,7 +115,7 @@ def add_song(comment):
 def post_comment(comment, track_ids):
     track_names = sbot.get_track_names(track_ids[0])
     
-    reply = "I've added your song, ***'" + track_names[0] + "'*** by **" + track_names[1] + "** "\
+    reply = "I've added your song, ***'" + track_names[0] + "'*** by **" + track_names[1] + "** " \
         + " to this thread's playlist: ['" + sbot.get_playlist_name(comment.link_id) + "'](" + sbot.get_playlist_link(comment.link_id) + ")" \
         + "\n\n [Sample of this song](" + sbot.get_track_preview(track_ids[0]) + ")" \
         + "\n\n*** \n\n ^^I'm ^^a ^^bot ^^in ^^development ^^by ^^/u/CarpetStore. [^^Message ^^him](https://www.reddit.com/message/compose/?to=CarpetStore) ^^with ^^comments ^^or ^^complaints."
@@ -122,7 +126,7 @@ def post_comment(comment, track_ids):
     
 def main():
     
-    for comment in subreddit.comments():
+    for comment in subreddits.comments():
         if hot_word in comment.body: 
             #check duplicates against file of replied IDs
             with open('comment_ids.txt', 'a+') as comment_ids:
@@ -141,3 +145,4 @@ def main():
 if __name__ == '__main__':
     while True:
         main()
+        
