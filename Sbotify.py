@@ -1,7 +1,8 @@
 import spotipy
 from spotipy import util
+from spotipy import oauth2 
 import config
-
+import pprint
 #add ability to call band name and add their most popular song
 #remove ' and " from query
 
@@ -14,12 +15,18 @@ redirect_uri = config.redirect_uri
 
 token = util.prompt_for_user_token(username,scope=scopes,client_id=client_id,client_secret=client_secret, redirect_uri=redirect_uri)
 sp = spotipy.Spotify(auth=token)
-sp.trace = False
-        
+    
+def refresh():
+    global sp
+    
+    pprint.pprint(token)
+    
 def create_playlist(playlist_title, playlist_desc):
     
     sp.user_playlist_create(username, playlist_title)
+    #sp.user_playlist_create(username, playlist_title, public=True, description=playlist_desc)
 
+    
 def search_track(track_title, artist_title):
     
     results = sp.search(q=track_title + ' ' + 'artist:' + artist_title,type='track',limit=1)
@@ -58,6 +65,10 @@ def get_track_preview(track_id):
     
     return sp.track(track_id)['preview_url']
 
+def get_track_link(track_id):
+    
+    return sp.track(track_id)['external_urls']['spotify']
+
 def get_playlist_name(link_id):
     
     playlists = sp.user_playlists(username)
@@ -77,3 +88,5 @@ def get_playlist_link(link_id):
             return playlist['external_urls']['spotify']
        
     return None
+
+#refresh()

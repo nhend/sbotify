@@ -1,6 +1,7 @@
 import Sbotify as sbot
 import praw
 import config
+from spotipy import SpotifyException
 
 client_id = config.reddit_id
 client_secret = config.reddit_secret
@@ -14,7 +15,6 @@ subreddit_list = config.subreddits
 #IMPLEMENT:
 #    Allowing for multiple songs in one comment
 #    Allowing hotword in middle of comment
-#    Ignoring already added comments
 #    Allowing for just a band name (pick 1 popular song)
 #    Allowing for just a song name ???
 
@@ -116,11 +116,17 @@ def post_comment(comment, track_ids):
     track_names = sbot.get_track_names(track_ids[0])
     
     reply = "I've added your song, ***'" + track_names[0] + "'*** by **" + track_names[1] + "** " \
-        + " to this thread's playlist: ['" + sbot.get_playlist_name(comment.link_id) + "'](" + sbot.get_playlist_link(comment.link_id) + ")" \
-        + "\n\n [Sample of this song](" + sbot.get_track_preview(track_ids[0]) + ")" \
+        + " to this thread's playlist: ['" + sbot.get_playlist_name(comment.link_id) + "'](" + sbot.get_playlist_link(comment.link_id) + ")"
+       
+    
+    if sbot.get_track_preview(track_ids[0]) != None:
+        reply += "\n\n [Sample of this song](" + sbot.get_track_preview(track_ids[0]) + ")" \
+        + "\n\n*** \n\n ^^I'm ^^a ^^bot ^^in ^^development ^^by ^^/u/CarpetStore. [^^Message ^^him](https://www.reddit.com/message/compose/?to=CarpetStore) ^^with ^^comments ^^or ^^complaints."
+    else:
+        reply += "\n\n This song doesn't have a sample available. [Here's a link to the full song](" + sbot.get_track_link(track_ids[0]) + ")" \
         + "\n\n*** \n\n ^^I'm ^^a ^^bot ^^in ^^development ^^by ^^/u/CarpetStore. [^^Message ^^him](https://www.reddit.com/message/compose/?to=CarpetStore) ^^with ^^comments ^^or ^^complaints."
     
-    print('Posted reply to ' + comment.id)
+    print('Posting reply to ' + comment.id)
     
     comment.reply(reply)
     
@@ -144,5 +150,18 @@ def main():
             
 if __name__ == '__main__':
     while True:
-        main()
+        try:
+            main()
+        
+        except SpotifyException:
+            sbot.refresh()
+            print('Refreshed token')
+        
+        except KeyboardInterrupt:
+            print('Goodbye!')
+            break
+            
+        except Exception as err:
+            print('Exception occurred:')
+            print(err)
         
