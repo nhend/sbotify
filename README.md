@@ -25,5 +25,5 @@ If you plan on running your own version of Sbotify, make sure you:
 
 ## Next Steps
 * Multiple songs in one comment
-* Better error handling
+* ~~Better error handling~~
 * Allow summoner to delete the reply comment and requested song (if the bot gets the wrong song, etc.)
