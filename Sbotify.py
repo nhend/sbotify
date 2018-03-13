@@ -2,7 +2,7 @@ import spotipy
 from spotipy import util
 from spotipy import oauth2 
 import config
-import pprint
+
 #add ability to call band name and add their most popular song
 #remove ' and " from query
 
@@ -19,12 +19,11 @@ sp = spotipy.Spotify(auth=token)
 def refresh():
     global sp
     
-    pprint.pprint(token)
     
 def create_playlist(playlist_title, playlist_desc):
     
-    sp.user_playlist_create(username, playlist_title)
-    #sp.user_playlist_create(username, playlist_title, public=True, description=playlist_desc)
+    #sp.user_playlist_create(username, playlist_title)
+    sp.user_playlist_create(username, playlist_title, public=True, description=playlist_desc)
 
     
 def search_track(track_title, artist_title):
@@ -49,8 +48,13 @@ def get_playlist_id(link_id):
 
 def add_track(track_id, playlist_id):
 
-    track_ids = [track_id] #for some reason, Spotipy only takes an array for track ids
-    sp.user_playlist_add_tracks(username, playlist_id=playlist_id, tracks=track_ids)
+    tracks = [track_id] #for some reason, Spotipy only takes an array for track ids
+    sp.user_playlist_add_tracks(username, playlist_id=playlist_id, tracks=tracks)
+    
+def remove_track(track_id, playlist_id):
+    
+    tracks = [track_id]
+    sp.user_playlist_remove_all_occurrences_of_tracks(username, playlist_id=playlist_id, tracks=tracks)
 
 #BELOW FUNCTIONS ARE FOR POSTING BOT REPLY
     

@@ -2,6 +2,7 @@ import Sbotify as sbot
 import praw
 import config
 from spotipy import SpotifyException
+import time
 
 client_id = config.reddit_id
 client_secret = config.reddit_secret
@@ -19,8 +20,8 @@ subreddit_list = config.subreddits
 #    Allowing for just a song name ???
 
 #FIX:
+#    Delete comments with bad score (<= -2 ?)
 #    Convert errors to error response (incorrect format etc.)
-#    Playlist descriptions - Spotify API doesn't allow for descriptions ? 
 
 reddit = praw.Reddit(client_id=client_id,
                      client_secret=client_secret,
@@ -116,8 +117,7 @@ def post_comment(comment, track_ids):
     track_names = sbot.get_track_names(track_ids[0])
     
     reply = "I've added your song, ***'" + track_names[0] + "'*** by **" + track_names[1] + "** " \
-        + " to this thread's playlist: ['" + sbot.get_playlist_name(comment.link_id) + "'](" + sbot.get_playlist_link(comment.link_id) + ")"
-       
+        + " to this thread's playlist: ['" + sbot.get_playlist_name(comment.link_id) + "'](" + sbot.get_playlist_link(comment.link_id) + ")"   
     
     if sbot.get_track_preview(track_ids[0]) != None:
         reply += "\n\n [Sample of this song](" + sbot.get_track_preview(track_ids[0]) + ")" \
@@ -126,12 +126,45 @@ def post_comment(comment, track_ids):
         reply += "\n\n This song doesn't have a sample available. [Here's a link to the full song](" + sbot.get_track_link(track_ids[0]) + ")" \
         + "\n\n*** \n\n ^^I'm ^^a ^^bot ^^in ^^development ^^by ^^/u/CarpetStore. [^^Message ^^him](https://www.reddit.com/message/compose/?to=CarpetStore) ^^with ^^comments ^^or ^^complaints."
     
-    print('Posting reply to ' + comment.id)
+    posted_comment = comment.reply(reply)
     
-    comment.reply(reply)
+    delete_link = " ^^Did ^^I ^^get ^^it ^^wrong? [^^Click ^^here ^^to ^^delete ^^this ^^comment ^^and ^^remove ^^your ^^song.](https://www.reddit.com/message/compose/?to=Sbotify&subject=delete&message=" \
+    + posted_comment.id + ")"
     
+    time.sleep(1)
+    posted_comment.edit(posted_comment.body + delete_link)
+    
+    print('Posted reply to ' + comment.id)
+    
+def check_delete():
+    
+    for message in reddit.inbox.messages(limit=25): 
+        #using python short circuit evaluation to make sure the message is new, about deletion, about an actual comment, and sent by the author of the relevant comment
+        if message.new and message.subject.lower() == 'delete':
+            print('Found delete message')
+            
+            my_comment = reddit.comment(id=message.body)
+            
+            parent_comment = reddit.comment(id=my_comment.parent_id[3:]) #parent_id includes prefix 't1_', but comment object doesn't take fullname, just id (stuff after prefix)
+            
+            if parent_comment.id in open('comment_ids.txt').read(): 
+                if message.author.name == parent_comment.author:
+            
+                    track_titles = parse_comment(parent_comment)
+                    track_id = sbot.search_track(track_titles[0], track_titles[1])
+                    
+                    playlist_id = sbot.get_playlist_id(parent_comment.link_id)
+                    
+                    sbot.remove_track(track_id, playlist_id)
+                    
+                    my_comment.delete()               
+                    message.mark_read()
+                    
+                    print('Deleted ' + my_comment.id + ' on: ' + parent_comment.id)   
+        #else break
+
 def main():
-    
+
     for comment in subreddits.comments():
         if hot_word in comment.body: 
             #check duplicates against file of replied IDs
@@ -147,7 +180,9 @@ def main():
                         track_ids = add_song(comment)
                         post_comment(comment, track_ids)
                         break
-            
+    
+    check_delete()
+                
 if __name__ == '__main__':
     while True:
         try:
@@ -160,8 +195,8 @@ if __name__ == '__main__':
         except KeyboardInterrupt:
             print('Goodbye!')
             break
-            
-        except Exception as err:
-            print('Exception occurred:')
-            print(err)
+        
+        #except Exception as e:
+        #    print('Exception occurred:')
+        #    print(e)
         
