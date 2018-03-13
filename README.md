@@ -5,9 +5,9 @@ This project is a python bot that scrapes reddit comments for song and artist na
 ## Usage 
 You can summon Sbotify by using the following format at the end of your comment: **!Sbotify song: {song name} artist: {artist name}**
 
-After adding the song, Sbotify will reply to the summoning comment with a message telling the user their song was added to the playlist. It will also provide a link to the playlist, a link to a 30sec preview (which can be played without logging into Spotify), and a link to message me in case of an issue.
+After adding the song, Sbotify will reply to the summoning comment with a message telling the user their song was added to the playlist. It will also provide a link to the playlist, a link to a 30sec preview (which can be played without logging into Spotify), and a link to message me in case of an issue. The reply also includes a link for the summoner to delete the bot's comment and remove the song from the playlist (used especially if the bot gets their song wrong).
 
-![img](https://imgur.com/ZZW5SgP.png)
+![img](https://i.imgur.com/7GdvGDr.png)
 
 ## Requirements
 
@@ -27,4 +27,4 @@ If you plan on running your own version of Sbotify, make sure you:
 * Multiple songs in one comment
 * ~~Playlist descriptions with subreddit, author, and full title~~
 * ~~Better error handling~~
-* Allow summoner to delete the reply comment and requested song (if the bot gets the wrong song, etc.)
+* ~~Allow summoner to delete the reply comment and requested song (if the bot gets the wrong song, etc.)~~
