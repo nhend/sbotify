@@ -2,9 +2,8 @@ import spotipy
 from spotipy import util
 from spotipy import oauth2 
 import config
-
-#add ability to call band name and add their most popular song
-#remove ' and " from query
+from spotipy.oauth2 import SpotifyClientCredentials
+import time
 
 ### SCOPES AND CREDENTIALS ###
 username = config.spotify_username
@@ -13,18 +12,36 @@ client_id = config.spotify_client_id
 client_secret = config.spotify_client_secret
 redirect_uri = config.redirect_uri
 
-token = util.prompt_for_user_token(username,scope=scopes,client_id=client_id,client_secret=client_secret, redirect_uri=redirect_uri)
+'''
+client_credentials_manager = SpotifyClientCredentials(client_id=client_id,client_secret=client_secret)
+sp = spotipy.Spotify(client_credentials_manager=client_credentials_manager)
+'''
+
+sp_oauth = oauth2.SpotifyOAuth(client_id=client_id,client_secret=client_secret,redirect_uri=redirect_uri,scope=scopes)
+token_info = sp_oauth.get_cached_token() #LOOK AT API TO FIND
+if not token_info:
+    auth_url = sp_oauth.get_authorize_url(show_dialog=True)
+    print(auth_url)
+    response = input('Enter the url: ')
+    
+    code = sp_oauth.parse_response_code(response)
+    token_info = sp_oauth.get_access_token(code)
+    
+    token = token_info['access_token']
+    
 sp = spotipy.Spotify(auth=token)
-    
+
 def refresh():
-    global sp
+    global token_info, sp
     
+    if sp_oauth.is_token_expired(token_info):
+        token_info = sp_oauth.refresh_access_token(token_info['refresh_token'])
+        token = token_info['access_token']
+        sp = spotipy.Spotify(auth=token)
     
 def create_playlist(playlist_title, playlist_desc):
     
-    #sp.user_playlist_create(username, playlist_title)
     sp.user_playlist_create(username, playlist_title, public=True, description=playlist_desc)
-
     
 def search_track(track_title, artist_title):
     
