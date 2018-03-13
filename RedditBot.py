@@ -1,8 +1,10 @@
 import Sbotify as sbot
 import praw
+from praw.models import Comment, Message
 import config
 from spotipy import SpotifyException
 import time
+import re
 
 client_id = config.reddit_id
 client_secret = config.reddit_secret
@@ -34,30 +36,23 @@ subreddits = reddit.subreddit('+'.join(subreddit_list))
 
 def parse_comment(comment):
     
-    comment_body = comment.body
-    comment_body = comment_body[comment_body.find(hot_word):]  # Shorten comment_body to content after the hotword call
-    comment_body = comment_body.lower()
-
-    track_index = comment_body.find('song: ')
-    artist_index = comment_body.find('artist: ')
-    
-    #if begins with space, add 1
-    
-    track_offset = 6   # Need characters after 'song:', so exclude 'song:'
-    artist_offset = 8  # Could've used len()+1 but that'd only be necessary if I changed the format
-    
-    if track_index == -1 or artist_index == -1:
+    '''
+    if #can't find song or artist#
         comment.reply("Hi! Looks like you've used the wrong format, in case you've forgotten it's" + \
                       "\n\n!Sbotify song: {song title} artist: {artist name}" + \
                       "\n\n*** \n\n ^^I'm ^^a ^^bot ^^in ^^development ^^by ^^/u/CarpetStore. [^^Message ^^him](https://www.reddit.com/message/compose/?to=CarpetStore) ^^with ^^comments ^^or ^^complaints.")
         
         print('Posted error reply to ' + comment.id)
-        
-    track_index += track_offset
-    artist_index += artist_offset
+    '''
+    titles_list = re.findall(r'\*\*(.*?)\*\*:\*(.*?)\*',comment.body)
+
+    '''
+    for pair in titles_list:
+        print(pair[0] + ' ' + pair[1])
+    '''
     
-    track = comment_body[track_index:artist_index-artist_offset]
-    artist = comment_body[artist_index:]
+    track = titles_list[0][0]
+    artist = titles_list[0][1]
     
     return [track, artist]
     
@@ -66,7 +61,7 @@ def gen_title(comment):
     #playlist title format is: [POST ID] POST TITLE
     #ex. [t3_827zrc] Favorite Count Basie songs?
       
-    title = '[' + comment.link_id + '] ' + comment.link_title
+    title = '[' + comment.parent_id + '] ' + comment.link_title
     #Spotify only allows 50 character titles, so limit
     title = (title[:50]) if len(title) > 50 else title
     
@@ -89,18 +84,18 @@ def add_song(comment):
             link_ids.seek(0)
             
             while True:
-                if comment.link_id in link_ids.read(): #if we've seen this thread before, just add the song to that id playlist
+                if comment.parent_id in link_ids.read(): #if we've seen this thread before, just add the song to that id playlist
                     #add song
                     track_titles = parse_comment(comment)
                     track_id = sbot.search_track(track_titles[0], track_titles[1])
                     
-                    playlist_id = sbot.get_playlist_id(comment.link_id)
+                    playlist_id = sbot.get_playlist_id(comment.parent_id)
                     
                     sbot.add_track(track_id, playlist_id)
                     break
                 
                 else: #else, create a playlist and add the song
-                    link_ids.write('\n' + comment.link_id)
+                    link_ids.write('\n' + comment.parent_id)
                     #create playlist                   
                     sbot.create_playlist(gen_title(comment), gen_desc(comment))
                     
@@ -108,7 +103,7 @@ def add_song(comment):
                     track_titles = parse_comment(comment)
                     track_id = sbot.search_track(track_titles[0], track_titles[1])
                     
-                    playlist_id = sbot.get_playlist_id(comment.link_id)
+                    playlist_id = sbot.get_playlist_id(comment.parent_id)
                     
                     sbot.add_track(track_id, playlist_id)
                     
@@ -121,7 +116,7 @@ def post_comment(comment, track_ids):
     track_names = sbot.get_track_names(track_ids[0])
     
     reply = "I've added your song, ***'" + track_names[0] + "'*** by **" + track_names[1] + "** " \
-        + " to this thread's playlist: ['" + sbot.get_playlist_name(comment.link_id) + "'](" + sbot.get_playlist_link(comment.link_id) + ")"   
+        + " to this thread's playlist: ['" + sbot.get_playlist_name(comment.parent_id) + "'](" + sbot.get_playlist_link(comment.parent_id) + ")"   
     
     if sbot.get_track_preview(track_ids[0]) != None:
         reply += "\n\n [Sample of this song](" + sbot.get_track_preview(track_ids[0]) + ")" \
@@ -157,7 +152,7 @@ def check_delete():
                     track_titles = parse_comment(parent_comment)
                     track_id = sbot.search_track(track_titles[0], track_titles[1])
                     
-                    playlist_id = sbot.get_playlist_id(parent_comment.link_id)
+                    playlist_id = sbot.get_playlist_id(parent_comment.parent_id)
                     
                     sbot.remove_track(track_id, playlist_id)
                     
@@ -169,8 +164,8 @@ def check_delete():
 
 def main():
     
-    for comment in subreddits.comments():
-        if hot_word in comment.body: 
+    for comment in reddit.inbox.unread():
+        if isinstance(comment, Comment) and bool(re.search('\*\*(.*?)\*\*:\*(.*?)\*', comment.body)):
             #check duplicates against file of replied IDs
             with open('comment_ids.txt', 'a+') as comment_ids:
                 comment_ids.seek(0)
@@ -180,7 +175,7 @@ def main():
                         break
                     else: #else, add song to thread's playlist
                         comment_ids.write('\n' + comment.id)
-                        sbot.refresh() #refresh spotify API
+                        sbot.refresh() #checks if new API token is needed, refreshes if so
                         
                         track_ids = add_song(comment)
                         post_comment(comment, track_ids)
@@ -201,9 +196,10 @@ if __name__ == '__main__':
         except KeyboardInterrupt:
             print('Goodbye!')
             break
-        
+        '''
         except Exception as e:
             print('Exception occurred:')
             reddit.redditor('CarpetStore').message('Sbotify Error occurred', e)
             print(e)
+        '''
         
