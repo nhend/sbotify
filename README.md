@@ -24,7 +24,7 @@ If you plan on running your own version of Sbotify, make sure you:
 * [PRAW](https://github.com/praw-dev/praw) for interaction with reddit
 
 ## Next Steps
-* Multiple songs in one comment
+* ~~Multiple songs in one comment~~
 * ~~Improve summon detection with regex~~
 * ~~Get summons from inbox instead of comment search~~
 * ~~Playlist descriptions with subreddit, author, and full title~~
