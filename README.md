@@ -4,7 +4,7 @@ This project is a python bot that scrapes reddit for a 'summon' with song and ar
 
 ## Usage 
 You can summon Sbotify by using the following format anywhere in your comment: **/u/Sbotify \*\*song name\*\*:\*artist name\***
-You can 
+You can add any number of songs from your comment by repeating the syntax after /u/Sbotify (see image below)
 
 After adding the songs, Sbotify will reply to the summoning comment with a message telling the user their songs were added to the playlist. It will also provide a link to the playlist, a link to a 30sec preview (which can be played without logging into Spotify), and a link to message me in case of an issue. The reply also includes a link for the summoner to delete the bot's comment and remove their songs from the playlist (used especially if the bot gets their songs wrong).
 
