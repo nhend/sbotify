@@ -1,8 +1,8 @@
 import Sbotify as sbot
-import praw
-from praw.models import Comment, Message
-import config
 from spotipy import SpotifyException
+import praw
+from praw.models import Comment
+import config
 import time
 import re
 
@@ -16,8 +16,6 @@ subreddit_list = config.subreddits
 
 #FORMAT: !Sbotify song:94 Dreaming artist:ATO
 #IMPLEMENT:
-#    Allowing for multiple songs in one comment
-#    Allowing hotword in middle of comment
 #    Allowing for just a band name (pick 1 popular song)
 #    Allowing for just a song name ???
 
@@ -51,17 +49,15 @@ def parse_comment(comment):
         print(pair[0] + ' ' + pair[1])
     '''
     
-    track = titles_list[0][0]
-    artist = titles_list[0][1]
-    
-    return [track, artist]
+    #  titles_list looks like [(Sex and Drugs, Abhi the Nomad), (Pusher, Alt-J)]
+    return titles_list
     
 def gen_title(comment):
     
     #playlist title format is: [POST ID] POST TITLE
     #ex. [t3_827zrc] Favorite Count Basie songs?
       
-    title = '[' + comment.parent_id + '] ' + comment.link_title
+    title = '[' + get_link_id(comment) + '] ' + comment.link_title
     #Spotify only allows 50 character titles, so limit
     title = (title[:50]) if len(title) > 50 else title
     
@@ -71,60 +67,84 @@ def gen_desc(comment):
     
     #description format is: POST TITLE by USER in SUBREDDIT
     
-    desc = '\"' + comment.link_title + '\" by ' + comment.link_author + ' in ' + comment.subreddit_name_prefixed
+    desc = '\"' + comment.link_title + '" in ' + comment.subreddit_name_prefixed
     #Spotify only allows 300 character descriptions, so limit
     desc = (desc[:300]) if len(desc) > 300 else desc
     
     return desc
 
+def get_link_id(comment):
+    #print(comment)
+    
+    vars_dict = vars(comment)
+    if 'context' in vars_dict:
+        location = 'context'
+    elif 'permalink' in vars_dict:
+        location = 'permalink'
+    else:
+        print('Err: No context or permalink!')
+        print(vars_dict)
+        
+    title = re.findall(r'/comments/(.*?)/',vars_dict[location])
+
+    return title[0]  # findall() returns an array so just take the first one
+
 def add_song(comment):
     
+    track_ids = []
     #if comment.thread_id in link_ids.txt, add song to playlist of that id
     with open('link_ids.txt', 'a+') as link_ids:
             link_ids.seek(0)
             
             while True:
-                if comment.parent_id in link_ids.read(): #if we've seen this thread before, just add the song to that id playlist
+                if get_link_id(comment) in link_ids.read(): #if we've seen this thread before, just add the song to that id playlist
                     #add song
-                    track_titles = parse_comment(comment)
-                    track_id = sbot.search_track(track_titles[0], track_titles[1])
+                    name_pairs = parse_comment(comment)
+
+                    for pair in name_pairs:
+                        track_id = sbot.search_track(pair[0], pair[1])
+                        playlist_id = sbot.get_playlist_id(get_link_id(comment))
                     
-                    playlist_id = sbot.get_playlist_id(comment.parent_id)
-                    
-                    sbot.add_track(track_id, playlist_id)
+                        sbot.add_track(track_id, playlist_id)
+                        track_ids.append(track_id)
                     break
                 
                 else: #else, create a playlist and add the song
-                    link_ids.write('\n' + comment.parent_id)
+                    link_ids.write('\n' + get_link_id(comment))
                     #create playlist                   
                     sbot.create_playlist(gen_title(comment), gen_desc(comment))
                     
                     #add song
-                    track_titles = parse_comment(comment)
-                    track_id = sbot.search_track(track_titles[0], track_titles[1])
+                    name_pairs = parse_comment(comment)
+
+                    for pair in name_pairs:
+                        track_id = sbot.search_track(pair[0], pair[1])
+                        playlist_id = sbot.get_playlist_id(get_link_id(comment))
                     
-                    playlist_id = sbot.get_playlist_id(comment.parent_id)
-                    
-                    sbot.add_track(track_id, playlist_id)
-                    
+                        sbot.add_track(track_id, playlist_id)
+                        track_ids.append(track_id)                      
                     break
     
-    return [track_id, playlist_id]
+    return [track_ids, playlist_id]
  
 def post_comment(comment, track_ids):
     
-    track_names = sbot.get_track_names(track_ids[0])
+    #track_ids looks like [['2384thk3j4thh938h', 'i732rhwr7befw23r'], '39485y934gfwkdfg29']
+    #so, songs are track_ids[0][i] and playlist is track_ids[1][0]
     
-    reply = "I've added your song, ***'" + track_names[0] + "'*** by **" + track_names[1] + "** " \
-        + " to this thread's playlist: ['" + sbot.get_playlist_name(comment.parent_id) + "'](" + sbot.get_playlist_link(comment.parent_id) + ")"   
+    reply = "I've added your songs to this thread's playlist: ['" + sbot.get_playlist_name(get_link_id(comment)) + "'](" + sbot.get_playlist_link(get_link_id(comment)) + ")"   
     
-    if sbot.get_track_preview(track_ids[0]) != None:
-        reply += "\n\n [Sample of this song](" + sbot.get_track_preview(track_ids[0]) + ")" \
-        + "\n\n*** \n\n ^^I'm ^^a ^^bot ^^in ^^development ^^by ^^/u/CarpetStore. [^^Message ^^him](https://www.reddit.com/message/compose/?to=CarpetStore) ^^with ^^comments ^^or ^^complaints."
-    else:
-        reply += "\n\n This song doesn't have a sample available. [Here's a link to the full song](" + sbot.get_track_link(track_ids[0]) + ")" \
-        + "\n\n*** \n\n ^^I'm ^^a ^^bot ^^in ^^development ^^by ^^/u/CarpetStore. [^^Message ^^him](https://www.reddit.com/message/compose/?to=CarpetStore) ^^with ^^comments ^^or ^^complaints."
+    counter = 0
     
+    for track_id in track_ids[0]:    
+        if sbot.get_track_preview(track_ids[0][counter]) != None:
+            reply += "\n\n [Sample of **" + sbot.get_track_names(track_ids[0][counter])[0] + "** by *" + sbot.get_track_names(track_ids[0][counter])[1] + "*](" + sbot.get_track_preview(track_ids[0][counter]) + ")"
+        else:
+            reply += "\n\n **" + sbot.get_track_names(track_ids[0][counter])[0] + "** by *" + sbot.get_track_names(track_ids[0][counter])[1] + "* doesn't have a sample available. [Link to the full song](" + sbot.get_track_link(track_ids[0][counter]) + ")"
+        
+        counter += 1
+    
+    reply += "\n\n*** \n\n ^^I'm ^^a ^^bot ^^in ^^development ^^by ^^/u/CarpetStore. [^^Message ^^him](https://www.reddit.com/message/compose/?to=CarpetStore) ^^with ^^comments ^^or ^^complaints." 
     posted_comment = comment.reply(reply)
     
     delete_link = " ^^Did ^^I ^^get ^^it ^^wrong? [^^Click ^^here ^^to ^^delete ^^this ^^comment ^^and ^^remove ^^your ^^song.](https://www.reddit.com/message/compose/?to=Sbotify&subject=delete&message=" \
@@ -150,11 +170,11 @@ def check_delete():
                 if message.author.name == parent_comment.author:
             
                     track_titles = parse_comment(parent_comment)
-                    track_id = sbot.search_track(track_titles[0], track_titles[1])
+                    playlist_id = sbot.get_playlist_id(get_link_id(parent_comment))
                     
-                    playlist_id = sbot.get_playlist_id(parent_comment.parent_id)
-                    
-                    sbot.remove_track(track_id, playlist_id)
+                    for track_title in track_titles:
+                        track_id = sbot.search_track(track_title[0], track_title[1])
+                        sbot.remove_track(track_id, playlist_id)
                     
                     my_comment.delete()               
                     message.mark_read()
@@ -177,8 +197,10 @@ def main():
                         comment_ids.write('\n' + comment.id)
                         sbot.refresh() #checks if new API token is needed, refreshes if so
                         
+                        comment.mark_read()
                         track_ids = add_song(comment)
                         post_comment(comment, track_ids)
+                        
                         break
     
     check_delete()
@@ -196,10 +218,9 @@ if __name__ == '__main__':
         except KeyboardInterrupt:
             print('Goodbye!')
             break
-        '''
+        
         except Exception as e:
             print('Exception occurred:')
             reddit.redditor('CarpetStore').message('Sbotify Error occurred', e)
             print(e)
-        '''
         
