@@ -1,11 +1,12 @@
 # Sbotify
 
-This project is a python bot that scrapes reddit comments for song and artist names and then adds that song to a playlist dedicated to that thread. The intention with this project was to cater to threads with large collections of songs, for example: "What are your best workout songs?" could be found on /r/fitness, "Post your favorite Count Basie song" could be found on /r/jazz, etc. 
+This project is a python bot that scrapes reddit for a 'summon' with song and artist names and then adds those songs to a playlist dedicated to that thread. The intention with this project was to cater to threads with large collections of songs, for example: "What are your best workout songs?" could be found on /r/fitness, "Post your favorite Count Basie song" could be found on /r/jazz, etc. 
 
 ## Usage 
-You can summon Sbotify by using the following format at the end of your comment: **/u/Sbotify \*\*song name\*\*:\*artist name\***
+You can summon Sbotify by using the following format anywhere in your comment: **/u/Sbotify \*\*song name\*\*:\*artist name\***
+You can 
 
-After adding the song, Sbotify will reply to the summoning comment with a message telling the user their song was added to the playlist. It will also provide a link to the playlist, a link to a 30sec preview (which can be played without logging into Spotify), and a link to message me in case of an issue. The reply also includes a link for the summoner to delete the bot's comment and remove the song from the playlist (used especially if the bot gets their song wrong).
+After adding the songs, Sbotify will reply to the summoning comment with a message telling the user their songs were added to the playlist. It will also provide a link to the playlist, a link to a 30sec preview (which can be played without logging into Spotify), and a link to message me in case of an issue. The reply also includes a link for the summoner to delete the bot's comment and remove their songs from the playlist (used especially if the bot gets their songs wrong).
 
 ![img](https://i.imgur.com/BD3PLXT.png)
 
