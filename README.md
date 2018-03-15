@@ -8,7 +8,7 @@ You can add any number of songs from your comment by repeating the syntax after 
 
 After adding the songs, Sbotify will reply to the summoning comment with a message telling the user their songs were added to the playlist. It will also provide a link to the playlist, a link to a 30sec preview (which can be played without logging into Spotify), and a link to message me in case of an issue. The reply also includes a link for the summoner to delete the bot's comment and remove their songs from the playlist (used especially if the bot gets their songs wrong).
 
-![img](https://i.imgur.com/BD3PLXT.png)
+![img](https://i.imgur.com/GMr9NXC.png)
 
 ## Requirements
 
