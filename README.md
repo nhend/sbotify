@@ -17,7 +17,7 @@ If you're familiar with reddit, you can find more usage information on the [FAQ]
 If you plan on running your own version of Sbotify, make sure you:
 * Have a Spotify account
 * Have a reddit account
-* Configure ```config.py``` with *your own API ids and information*. Make sure to put your own username in your reddit useragent
+* Configure ```config.py``` with *your own API ids and information*. Make sure to put your reddit username in your reddit useragent
 * Create an empty ```comment_ids.txt``` and ```link_ids.txt``` to keep track of what comments your bot has seen
 * Install the libraries mentioned below
 
