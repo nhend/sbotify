@@ -33,6 +33,7 @@ If you plan on running your own version of Sbotify, make sure you:
 * ~~Playlist descriptions with subreddit, author, and full title~~
 * ~~Better error handling~~
 * ~~Allow summoner to delete the reply comment and requested song (if the bot gets the wrong song, etc.)~~
+* Prevent duplicates from being added to a playlist
 
 ## Thanks 
 * /u/kungming2 -- suggested new syntax and summon source
