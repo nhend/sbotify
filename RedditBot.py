@@ -15,8 +15,10 @@ user_agent = config.user_agent
 #FORMAT: /u/Sbotify **94 Dreaming**:*ATO* **Somebody to Love**:*Abhi the Nomad*
 #IMPLEMENT:
 #    Delete comments with bad score (<= -2 ?)
+
 #FIX:
-#
+#    Duplicates
+#    Non-songs being 'added'
 
 reddit = praw.Reddit(client_id=client_id,
                      client_secret=client_secret,
@@ -120,11 +122,19 @@ def add_song(comment):
                     for pair in name_pairs:
                         # Use Spotify's search function to get id of the requested song
                         track_id = sbot.search_track(pair[0], pair[1])
-                        playlist_id = sbot.get_playlist_id(get_link_id(comment))
-                    
-                        # Add the song and record 
-                        sbot.add_track(track_id, playlist_id)
-                        track_ids.append(track_id)
+                        
+                        # Make sure the song exists
+                        if track_id != None:
+                            playlist_id = sbot.get_playlist_id(get_link_id(comment))
+                        
+                            # Add the song and record 
+                            sbot.add_track(track_id, playlist_id)
+                            track_ids.append(track_id)
+                        
+                        # Ignore 'tracks' that don't exist     
+                        else:
+                            continue
+                            
                     break
                 
                 else: # If we haven't, create a playlist and add the song
@@ -138,11 +148,19 @@ def add_song(comment):
                     for pair in name_pairs:
                         # Use Spotify's search function to get id of the requested song
                         track_id = sbot.search_track(pair[0], pair[1])
-                        playlist_id = sbot.get_playlist_id(get_link_id(comment))
                         
-                        # Add the song and record 
-                        sbot.add_track(track_id, playlist_id)
-                        track_ids.append(track_id)                      
+                        # Make sure the song exists
+                        if track_id != None:
+                            playlist_id = sbot.get_playlist_id(get_link_id(comment))
+                        
+                            # Add the song and record 
+                            sbot.add_track(track_id, playlist_id)
+                            track_ids.append(track_id)
+                        
+                        # Ignore 'tracks' that don't exist   
+                        else:
+                            continue
+                            
                     break
     
     return [track_ids, playlist_id]
@@ -184,7 +202,7 @@ def post_comment(comment, track_ids):
                 + sbot.get_track_link(track_id) + ")"
     
     reply += "\n\n*** \n\n[^\[FAQ\]](https://www.reddit.com/r/Sbotify/comments/84ic13/sbotify_info/)" \
-        + "^- [^Message ^my ^developer](https://www.reddit.com/message/compose/?to=CarpetStore) ^-" 
+        + " ^- [^Message ^my ^developer](https://www.reddit.com/message/compose/?to=CarpetStore) ^-" 
     
     # Post comment before the deletion link edit
     posted_comment = comment.reply(reply)
@@ -291,6 +309,5 @@ if __name__ == '__main__':
         # It's lazy but necessary to keep the bot running 24/7
         except Exception as e:
             print('Exception occurred:')
-            reddit.redditor('CarpetStore').message('Sbotify Error occurred', e)
             print(e)
         
