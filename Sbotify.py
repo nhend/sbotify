@@ -1,6 +1,7 @@
 import spotipy
 from spotipy import oauth2 
 import config
+import pprint #!!!!!!!!!
 
 ### SCOPES AND CREDENTIALS ###
 username = config.spotify_username
@@ -56,11 +57,23 @@ def get_playlist_id(link_id):
        
     return None
 
+def get_all_track_ids(link_id):
+    
+    # look at docs
+    pass
+
 def add_track(track_id, playlist_id):
 
     tracks = [track_id] #for some reason, Spotipy only takes an array for track ids
-    sp.user_playlist_add_tracks(username, playlist_id=playlist_id, tracks=tracks)
     
+    # Check if track is already in playlist
+    track_list = sp.user_playlist(username, playlist_id, fields="tracks,next")    
+    for track in track_list['tracks']['items']:
+        if track['track']['id'] == track_id:
+            return None
+        
+    sp.user_playlist_add_tracks(username, playlist_id=playlist_id, tracks=tracks)
+  
 def remove_track(track_id, playlist_id):
     
     tracks = [track_id]
