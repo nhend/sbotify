@@ -3,6 +3,8 @@
 This project is a python bot that scrapes reddit for a 'summon' with song and artist names and then adds those songs to a playlist dedicated to that thread. The intention with this project was to cater to threads with large collections of songs, for example: "What are your best workout songs?" could be found on /r/fitness, "Post your favorite Count Basie song" could be found on /r/jazz, etc. 
 
 ## Usage 
+Note: /u/Sbotify is not currently active
+
 You can summon Sbotify by using the following format anywhere in your comment: **/u/Sbotify \*\*song name\*\*:\*artist name\***
 You can add any number of songs from your comment by repeating the syntax after /u/Sbotify (see image below)
 
