@@ -12,7 +12,7 @@ After adding the songs, Sbotify will reply to the summoning comment with a messa
 
 If you're familiar with reddit, you can find more usage information on the [FAQ](https://www.reddit.com/r/Sbotify/comments/84ic13/sbotify_info/)
 
-![img](https://i.imgur.com/GMr9NXC.png)
+![img](https://i.imgur.com/yvBkk53.png)
 
 ## Requirements
 
